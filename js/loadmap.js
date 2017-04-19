@@ -17,6 +17,7 @@
             infoBox.close();
         });        
         
+        // load event listener
         getAjaxData(map, "data/geotweets_merc3857.geo.json", "tweets");
         getAjaxData(map, "data/attractions_4326.geo.json", "attractions");
         
@@ -31,42 +32,58 @@
         
      };
     
-    
     // Loads data using AJAX
     function getAjaxData(map, dataUrl, dataType) {
         // load the data
-        $.getJSON(dataUrl,  function(data) {
-            console.log(data.features.length);
-            for (var i = 0; i < data.features.length; i++) {
-                var name, html, pointLatLong;
-                var itemProps = data.features[i].properties;
-                
-                if (dataType == "tweets") {
-                    name = itemProps.name;
-                    html = "<b>"+itemProps.name+"<\/b><br \/>"+itemProps.text+"<br/>title='"+ itemProps.screen_nam;
-                    pointLatLong = new google.maps.LatLng(itemProps.latitude, itemProps.longitude);
-                    // create the marker
-                    // category could be a different type of twitter item
-                    var marker = createMarker(pointLatLong, name, html, "tweets") //,category);         
-                    
-                } else if (dataType = "attractions") {
-                    html = "<b>"+itemProps.name+"<\/b><br \/>"+itemProps.desc_+"<br/>title='"+ itemProps.name;
-                    var geom = data.features[i].geometry.coordinates;
-                    // the lat long were reversed. In google maps, it should be long, lat
-                    pointLatLong = new google.maps.LatLng(geom[1], geom[0]);
-                    // create the marker
-                    // category could be a different type of twitter item
-                    var marker = createMarker(pointLatLong, name, html, "attractions") //,category);
-//                    console.log(marker);
-                };
-                                
-                // category could be used if we want to categorize the types of tweets
-//                var category = item.cat;
-            };
+        $.ajax({
+            url: dataUrl,  
+            success: function(data) {
+                parsePoints(data, dataType);
+            },
+            error: function(xhr, status, error) {
+              alert("An AJAX error occured: " + status + "\nError: " + error);
+            }            
         })
+    };    
+    
+//    // Loads data using AJAX simpler version
+//    function getAjaxData(map, dataUrl, dataType) {
+//        // load the data
+//        $.getJSON(dataUrl,  function(data) {
+//            parsePoints(data)
+//        })
+//    };
+    
+    // Function to take geojson data to parse out geometries to create lat long coordinates 
+    function parsePoints(data, dataType) {
+        for (var i = 0; i < data.features.length; i++) {
+            var name, html, pointLatLong;
+            var itemProps = data.features[i].properties;
+
+            if (dataType == "tweets") {
+                name = itemProps.name;
+                html = "<b>"+itemProps.name+"<\/b><br \/>"+itemProps.text+"<br/>title='"+ itemProps.screen_nam;
+                pointLatLong = new google.maps.LatLng(itemProps.latitude, itemProps.longitude);
+                // create the marker
+                // category could be a different type of twitter item
+                var marker = createMarker(pointLatLong, name, html, "tweets") //,category);         
+
+            } else if (dataType = "attractions") {
+                html = "<b>"+itemProps.name+"<\/b><br \/>"+itemProps.desc_+"<br/>title='"+ itemProps.name;
+                var geom = data.features[i].geometry.coordinates;
+                // the lat long were reversed. In google maps, it should be long, lat
+                pointLatLong = new google.maps.LatLng(geom[1], geom[0]);
+                // create the marker
+                // category could be a different type of twitter item
+                var marker = createMarker(pointLatLong, name, html, "attractions") //,category);
+            };
+
+            // category could be used if we want to categorize the types of tweets
+    //                var category = item.cat;
+        };
     };
     
-    // A function to create the marker and set up the event window
+    // Function to create a google marker and set up event window
     // from https://gist.github.com/phirework/4771983
     // removed "category" from function parameters since we don't categorize the tweets yet.
 //    function createMarker(latlng, name, html, category) {
@@ -106,7 +123,6 @@
             enableEventPropagation: false
         };
 
-
         var marker = new google.maps.Marker({
             position: latlng,
             //        icon: category + ".png",
@@ -128,26 +144,6 @@
             infoBox.open(map, this);
         });
     }; // end createMarker    
-    
-    
-    // THIS DOESN'T WORK...
-    // Loads json data into map. 
-    // Method to place the parsed GeoJSON data on the map.
-//    function loadOperationLayers(map) {
-//        console.log("map:" ,map);
-//        console.log("map.data: ", map.data);
-//        var geotweets = map.data.loadGeoJson('data/geotweets_merc3857.geojson');
-//        console.log(geotweets);
-//    };
-//
-//    // Set style for loaded data
-//    function styleData(map) {
-//        map.data.setStyle({
-//            icon: 'img/twitter.png',
-//            fillColor: 'green'
-//        });
-//    };
-    
     
     
 //    // Toggle layer on & off
